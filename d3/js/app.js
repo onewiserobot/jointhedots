@@ -57,8 +57,9 @@
 //                                 .attr("width", 200)
 //                                 .attr("height", 200);
 
-const RADIUS = 8;
-const BASE_COLOUR = "#cccccc";
+const RADIUS = 4;
+const BASE_COLOUR = "#000000";
+const SECONDARY_COLOUR = "#CCCCCC";
 
 // set the dimensions and margins of the graph
 var margin = {top: 20, right: 20, bottom: 30, left: 50};
@@ -114,8 +115,8 @@ function createDot (data) {
   dot.classed("active", true);
   // start pulstating animation
   pulsate();
-  // add click listener for dot
-  dot.on("click", dotSelected);
+  // add mouseover listener for dot
+  dot.on("mouseover", dotSelected);
   return dot;
 }
 
@@ -128,15 +129,19 @@ function addDot (data) {
 }
 
 function dotSelected (d) {
-  console.log("clicked");
+  
   var p1 = { x: this.getAttribute("cx"), y: this.getAttribute("cy") };
   var p2 = generateCoordinates();
   // begin drawing line from current dot to new dot location
   drawLine(p1, p2);
-  //Remove the currently clicked element from the selection.
+  //Remove the currently mouseover element from the selection.
   //remove active class from dot - stops pulsing animation
-  d3.select(this).on('click',null)
-                 .classed("active", false);
+  d3.select(this).on('mouseover',null)
+                 .classed("active", false)
+                 .interrupt()
+                 .transition()
+                 .attr("r", RADIUS/2)
+                 .style("fill", BASE_COLOUR);
 }
 
 function lineDrawn () {
@@ -154,7 +159,7 @@ function pulsate () {
   element.transition()
          .duration(1000)
          .attr("r", RADIUS*1.5)
-         .style("fill", "black")
+         .style("fill", SECONDARY_COLOUR)
          .transition(1000)
          .attr("r", RADIUS)
          .style("fill", BASE_COLOUR)
@@ -168,7 +173,7 @@ function drawLine (p1, p2, linkTo) {
               .attr("y1", p1.y)
               .attr("x2", p1.x)
               .attr("y2", p1.y)
-              .attr("stroke-width", 2)
+              .attr("stroke-width", 1)
               .attr("stroke", BASE_COLOUR)
               .transition()
               .duration(1500)
