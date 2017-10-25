@@ -101,10 +101,34 @@ function init () {
   var dot = createDot(coordinates);
 }
 
-function generateCoordinates () {
+function generateCoordinates (currentX, currentY) {
+
+  var distance = 150;
+  var left = 0;
+  var right = width;
+  var top = 0;
+  var bottom = height;
+
+  if (currentX) {
+    currentX = Math.round(currentX);
+    left = Math.max(0, currentX - distance);
+    right = Math.min(width, currentX + distance);
+  }
+
+  if (currentY) {
+    currentY = Math.round(currentY);
+    top = Math.max(0, currentY - distance);
+    bottom = Math.min(height, currentY + distance);
+  }
+
+  console.log("left",left);
+  console.log("right",right);
+  console.log("top",top);
+  console.log("bottom",bottom);
+
   return {
-    x: d3.randomUniform(width)(),
-    y: d3.randomUniform(height)()
+    x: d3.randomUniform(left, right)(),
+    y: d3.randomUniform(top, bottom)()
   };
 }
 
@@ -128,12 +152,25 @@ function addDot (data) {
             .style("fill", BASE_COLOUR);
 }
 
+function fadeLines () {
+  var lines = d3.selectAll("line, circle")
+                .transition()
+                .style("opacity", function () { 
+                  var current = d3.select(this).style("opacity");
+                  return current - (current*0.1);
+                });
+}
+
 function dotSelected (d) {
-  
+
   var p1 = { x: this.getAttribute("cx"), y: this.getAttribute("cy") };
-  var p2 = generateCoordinates();
+  var p2 = generateCoordinates(this.getAttribute("cx"), this.getAttribute("cy"));
+  
+  fadeLines();
+
   // begin drawing line from current dot to new dot location
   drawLine(p1, p2);
+
   //Remove the currently mouseover element from the selection.
   //remove active class from dot - stops pulsing animation
   d3.select(this).on('mouseover',null)
