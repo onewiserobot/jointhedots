@@ -211,7 +211,10 @@ function dotSelected (d) {
               //Remove the currently mouseover element from the selection.
               //remove active class from dot - stops pulsing animation
               d3.select(dot).on('mouseover',null)
-                             .classed("active", false);
+                             .classed("active", false)
+                             .transition()
+                              .duration(700)
+                              .attr('r', RADIUS/1.7);
             });  
    
 }
