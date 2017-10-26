@@ -137,11 +137,30 @@ function createDot (data) {
   var dot = addDot(data);
   // add active class to latest dot
   dot.classed("active", true);
+  // add rings to stage
+  createRings(data);
   // start pulstating animation
-  pulsate();
+  //pulsate();
   // add mouseover listener for dot
   dot.on("mouseover", dotSelected);
   return dot;
+}
+
+function createRings (data) {
+  var numRings = 5;
+  var colours = ["red","green","blue","yellow","purple"];
+  var i;
+
+  for (i = 0; i < numRings; i++) {
+    ring = addDotRing(data);
+    ring.classed("ring", true);
+    ring.datum( {index: i} );
+    //ring.style("stroke", colours[i]);
+
+    //pulsate(ring);
+  }
+
+  pulsate();
 }
 
 function addDot (data) {
@@ -152,7 +171,16 @@ function addDot (data) {
             .style("fill", BASE_COLOUR);
 }
 
-function fadeLines () {
+function addDotRing (data) {
+  return svg.append("circle")
+            .attr("cx", data.x)
+            .attr("cy", data.y)
+            .attr("r", RADIUS)
+            .style("stroke", BASE_COLOUR)
+            .style("fill", "none");
+} 
+
+function fadeElements () {
   var lines = d3.selectAll("line, circle")
                 .transition()
                 .style("opacity", function () { 
@@ -162,23 +190,30 @@ function fadeLines () {
 }
 
 function dotSelected (d) {
+  var dot = this;
 
-  var p1 = { x: this.getAttribute("cx"), y: this.getAttribute("cy") };
-  var p2 = generateCoordinates(this.getAttribute("cx"), this.getAttribute("cy"));
-  
-  fadeLines();
-
-  // begin drawing line from current dot to new dot location
-  drawLine(p1, p2);
-
-  //Remove the currently mouseover element from the selection.
-  //remove active class from dot - stops pulsing animation
-  d3.select(this).on('mouseover',null)
-                 .classed("active", false)
-                 .interrupt()
-                 .transition()
-                 .attr("r", RADIUS/2)
-                 .style("fill", BASE_COLOUR);
+   d3.selectAll('.ring')
+            .interrupt()
+            .transition()
+              .duration(300)
+              .style('opacity', 0)
+            .on('end', function () {
+              // remove old rings
+              d3.select(this).remove();
+              // get current dots coords
+              var p1 = { x: dot.getAttribute("cx"), y: dot.getAttribute("cy") };
+              // generate next dots coords 
+              var p2 = generateCoordinates(dot.getAttribute("cx"), dot.getAttribute("cy"));
+              // fade out existing circles and lines
+              fadeElements();
+              // begin drawing line from current dot to new dot location
+              drawLine(p1, p2);
+              //Remove the currently mouseover element from the selection.
+              //remove active class from dot - stops pulsing animation
+              d3.select(dot).on('mouseover',null)
+                             .classed("active", false);
+            });  
+   
 }
 
 function lineDrawn () {
@@ -192,16 +227,45 @@ function lineDrawn () {
 }
 
 function pulsate () {
-  var element = svg.select(".active");
-  element.transition()
-         .duration(1000)
-         .attr("r", RADIUS*1.5)
-         .style("fill", SECONDARY_COLOUR)
-         .transition(1000)
-         .attr("r", RADIUS)
-         .style("fill", BASE_COLOUR)
-         .on("end", pulsate);
+  var elements = d3.selectAll(".ring");
+  var numElements = elements.size();
+  var duration = 800 * numElements;
+
+  // begin animation
+  elements.transition()
+        .delay(function (d,i) { 
+          console.log(i);
+          return i * (duration/(numElements + 1)); 
+        })
+        .on("start", function repeat () {
+          d3.select(this)
+            .attr('r', RADIUS)
+            .style('opacity', 0.7)
+          .transition()
+            .ease(d3.easeCubicOut)
+            .duration(duration)
+            .attr('r', RADIUS*30)
+            .style('opacity', 0)
+          .on("end", repeat);
+        });
+        // .attr('r', RADIUS*10)
+        // .style('opacity', 0)
+        // .on("end", function () {
+        //   pulsate(d3.select(this));
+        // });
 }
+
+// function pulsate () {
+//   var element = svg.select(".active");
+//   element.transition()
+//          .duration(1000)
+//          .attr("r", RADIUS*1.5)
+//          .style("fill", SECONDARY_COLOUR)
+//          .transition(1000)
+//          .attr("r", RADIUS)
+//          .style("fill", BASE_COLOUR)
+//          .on("end", pulsate);
+// }
 
 function drawLine (p1, p2, linkTo) {
 
